@@ -34,20 +34,26 @@ export default function App(usr_id) {
   const chatRef=useRef(null)
   const [chatId, setChatId] = useState(null);
   const [newMessage, setNewMessage] = useState(false);
-  
 
-  useEffect(() => {
-    axios.get(`${backendHost}/chat/list/${userId}`)
-      .then(response => {
-        console.log(response.data)
-        setChatList(response.data);
-      })
-      .catch(error => {
-        console.log(error);
-      });
-      // scrollToBottom();
-      console.log(chats)
-  }, [userId]);
+
+
+const longPoll = () => {
+  axios.get(`${backendHost}/chat/list/${userId}`)
+    .then(response => {
+      setChatList(response.data);
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      longPoll();
+    });
+};
+
+useEffect(() => {
+  longPoll();
+}, [userId]);
+
 
   useEffect(
     ()=>{
@@ -56,11 +62,7 @@ export default function App(usr_id) {
   )
 
   const checkChat = (getId) => {
-    // Close the previous WebSocket connection if it exists
   
-
-    
-
 console.log('getid->',getId)
   
     axios
@@ -93,19 +95,16 @@ console.log('getid->',getId)
 
       socket.send(newMessage);
       setMessage('');
-      // chatRef.current.scrollIntoView({ behavior: 'smooth' });
         scrollToBottom();
       
     
     
     };
     const startWebSocket = (getChatId) => {
-      // Close the previous WebSocket connection if it exists
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
   
-      // Set up WebSocket connection
       const ws = new WebSocket("wss://all-cures.com:8000");
   
       ws.onopen = () => {
@@ -210,15 +209,11 @@ console.log('getid->',getId)
    
                </p>          </div>
            );
-         })}
-   
-   
-   
+         })} 
    
        </div>
    
-      
-         
+    
        <div className='message-footer' style={{display:header?'flex':'none'}}  >
             <form onSubmit={sendMessage}>
               <input type='text' placeholder='Type a message' value={message} onChange={(e) => setMessage(e.target.value)}  />
